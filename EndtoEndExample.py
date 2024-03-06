@@ -2,6 +2,7 @@
 
 # Cargar librerias
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import max
 
 # Crear sesión
 spark = SparkSession.builder.appName("EndtoEnd").getOrCreate()
@@ -16,7 +17,9 @@ flight2015 = spark.read.format("csv") \
     .load(local_path)
 
 # Register the DataFrame as a SQL temporary view
-flight2015.createOrReplaceTempView("View")
+
+# flight2015.createOrReplaceTempView("tableA")
+flight2015.createGlobalTempView("tableA")
 
 # flight2015.show(10, False)
 # +-----------------+-------------------+-----+
@@ -63,3 +66,30 @@ spark.conf.set("spark.sql.shuffle.partitions", 5)
 # Nosotros no manipularemos la data física, en cambio, configuraremos la ejecución física a traves de cosas como el
 # parametro del número[shuffle] particiones. Cambiar este valor puede ayudar a controlar las caracteristicas
 # del plan de ejecución de tus jobs de spark.
+
+# spark way
+flight2015_spark = flight2015.groupBy("DEST_COUNTRY_NAME").count()
+# flight2015_spark.show()
+
+# Plan físico de ejecución
+# flight2015_spark.explain()
+# == Physical Plan ==
+# AdaptiveSparkPlan isFinalPlan=false
+# +- HashAggregate(keys=[DEST_COUNTRY_NAME#17], functions=[count(1)])
+#    +- Exchange hashpartitioning(DEST_COUNTRY_NAME#17, 5), ENSURE_REQUIREMENTS, [plan_id=33]
+#       +- HashAggregate(keys=[DEST_COUNTRY_NAME#17], functions=[partial_count(1)])
+#          +- FileScan csv [DEST_COUNTRY_NAME#17] Batched: false, DataFilters: [], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/C:/Users/joni_/Downloads/2015-summary.csv], PartitionFilters: [], PushedFilters: [], ReadSchema: struct<DEST_COUNTRY_NAME:string>
+
+# Vamos a usar algunas funciones de spark y para ello es necesario importarlas
+# Aqui creo un nuevo nombre de DF, llamo al DF y con el operador punto llamo a select y el campo "count" y llamo
+# a la función y nuevamente con el operador punto llamo a la funcion alias para renombrar el campo.
+
+flight2015_max = flight2015.select(max("count").alias("Valor_maximo"))
+# flight2015_max.show()
+# +------------+
+# |Valor_maximo|
+# +------------+
+# |      370002|
+# +------------+
+
+
