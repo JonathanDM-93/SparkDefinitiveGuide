@@ -67,7 +67,23 @@ spark.conf.set("spark.sql.shuffle.partitions", 5)
 # parametro del número[shuffle] particiones. Cambiar este valor puede ayudar a controlar las caracteristicas
 # del plan de ejecución de tus jobs de spark.
 
-# spark way
+# -------------------------------------------------------------------------------------------------------------------- #
+"""DataFrames and SQL"""
+# Hemos trabajado con simples transformaciones en los ejemplos previos, trabajemos ahora a traves de ejemplos más
+# complejos a lo largo de DataFrames y SQL.
+
+# Para hacer un DataFrame una tabla o una vista a traves de un método simple:
+
+flight2015.createTempView("fligth_data_2025")
+
+# in Python
+sqlWay = spark.sql("""
+SELECT DEST_COUNTRY_NAME, COUNT(1)
+FROM fligth_data_2025
+GROUP BY DEST_COUNTRY_NAME
+""").show()
+
+# in Spark
 flight2015_spark = flight2015.groupBy("DEST_COUNTRY_NAME").count()
 # flight2015_spark.show()
 
